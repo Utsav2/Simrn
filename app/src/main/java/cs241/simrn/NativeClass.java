@@ -6,4 +6,6 @@ public class NativeClass {
     }
 
     public native String helloNdkString();
+
+    public native String helloSimrn();
 }
