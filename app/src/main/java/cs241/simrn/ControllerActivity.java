@@ -1,5 +1,6 @@
 package cs241.simrn;
 
+import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -48,14 +49,6 @@ public class ControllerActivity extends ActionBarActivity {
                 }
             }
         });
-        Button deletePreviousJobButton = (Button)findViewById(R.id.deletePreviousJobButton);
-        deletePreviousJobButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                deleteJob();
-                Toast.makeText(getApplicationContext(), "Will delete job if any", Toast.LENGTH_SHORT).show();
-            }
-        });
     }
 
     private void createJob(String imageUrl, String subImageUrl){
@@ -64,22 +57,9 @@ public class ControllerActivity extends ActionBarActivity {
         SimrnNetworker.createJob(imageUrl, subImageUrl, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject jsonObject) {
-                Log.d("Success!", jsonObject.toString());
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError volleyError) {
-                Log.e("Request failed!", volleyError.toString());
-            }
-        });
-    }
-
-    private void deleteJob(){
-        SimrnNetworker.initialize(this);
-        SimrnNetworker.deleteJob(new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject jsonObject) {
-                Log.d("Success!", jsonObject.toString());
+                Intent intent = new Intent(getApplicationContext(), ControllerPhaseActiivty.class);
+                intent.putExtra("data", jsonObject.toString());
+                startActivity(intent);
             }
         }, new Response.ErrorListener() {
             @Override
@@ -110,4 +90,6 @@ public class ControllerActivity extends ActionBarActivity {
 
         return super.onOptionsItemSelected(item);
     }
+
+
 }

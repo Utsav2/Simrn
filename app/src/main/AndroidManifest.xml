@@ -32,6 +32,10 @@
             android:name=".MapPhaseActivity"
             android:label="@string/title_activity_map_phase" >
         </activity>
+        <activity
+            android:name=".ControllerPhaseActiivty"
+            android:label="@string/title_activity_controller_phase_actiivty" >
+        </activity>
     </application>
 
 </manifest>

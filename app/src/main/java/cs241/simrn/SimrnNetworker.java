@@ -24,8 +24,14 @@ public class SimrnNetworker {
     private static Context mContext;
 
     public static void initialize(Context applicationContext){
-        mContext = applicationContext;
-        mRequestQueue = Volley.newRequestQueue(applicationContext);
+
+        if(applicationContext == null)
+            return;
+
+        if(mContext == null || !mContext.getClass().equals(applicationContext.getClass())) {
+            mContext = applicationContext;
+            mRequestQueue = Volley.newRequestQueue(applicationContext);
+        }
     }
 
     public static void createJob(String imageUrl, String subImageUrl,
@@ -77,15 +83,34 @@ public class SimrnNetworker {
     }
 
     public static void unregisterWorker(Response.Listener<JSONObject> listener,
-                                        Response.ErrorListener errorListener, String parent){
+                                        Response.ErrorListener errorListener){
 
-        toggleWorkerStatus(listener, errorListener, parent, "unregisterWorker");
+        toggleWorkerStatus(listener, errorListener, getImei(), "unregisterWorker");
 
     }
 
+    public static void getRequest(Response.Listener<JSONObject> listener,
+                                        Response.ErrorListener errorListener, String parent){
+
+        HashMap<String, String> params = new HashMap<>();
+        params.put("parent", parent);
+        createRequest(listener, errorListener, "getRequest", params, Request.Method.GET);
+    }
+
     private static void putImei(HashMap<String, String> params){
+        params.put("imei", getImei());
+    }
+
+    public static void getNumberOfWorkers(Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
+
+        HashMap<String, String> params = new HashMap<>();
+        putImei(params);
+        createRequest(listener, errorListener, "getNumberOfWorkers",params, Request.Method.POST);
+    }
+
+    private static String getImei(){
         TelephonyManager telephonyManager = (TelephonyManager)mContext.getSystemService(Context.TELEPHONY_SERVICE);
-        params.put("imei", telephonyManager.getDeviceId());
+        return telephonyManager.getDeviceId();
     }
 
     private static void addToQueue(SimrnRequest request){

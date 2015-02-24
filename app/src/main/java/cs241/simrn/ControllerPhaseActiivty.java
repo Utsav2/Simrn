@@ -5,6 +5,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -16,7 +20,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 
-public class MapPhaseActivity extends ActionBarActivity {
+public class ControllerPhaseActiivty extends ActionBarActivity {
 
     private JSONObject data;
 
@@ -26,36 +30,38 @@ public class MapPhaseActivity extends ActionBarActivity {
 
     private static final int POLL_PERIOD = 10000;
 
+    TextView numberOfWorkers;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_map_phase);
         timer = new Timer();
         try{
             data = new JSONObject(getIntent().getExtras().getString("data"));
             timer = new Timer();
-            register();
         }
-        catch (JSONException e){
+        catch (JSONException e) {
             Log.e("JSON", e.getMessage() + "");
             //never going to happen
         }
+        setContentView(R.layout.activity_controller_phase_actiivty);
+        setUpView();
+        poll();
     }
 
-    private void register() throws JSONException{
-        SimrnNetworker.initialize(this);
-        SimrnNetworker.registerWorker(new Response.Listener<JSONObject>() {
+    private void setUpView(){
+        Button deletePreviousJobButton = (Button)findViewById(R.id.deleteJob);
+        deletePreviousJobButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onResponse(JSONObject jsonObject) {
-                poll();
+            public void onClick(View v) {
+                deleteJob();
+                Toast.makeText(getApplicationContext(), "Will delete job", Toast.LENGTH_SHORT).show();
             }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError volleyError) {
-                Log.e("Volley", volleyError.getMessage() + "");
-            }
-        }, data.getString("imei"));
+        });
+
+        numberOfWorkers = (TextView)findViewById(R.id.numberOfWorkers);
     }
+
 
     private void poll(){
         timer.scheduleAtFixedRate(new TimerTask() {
@@ -71,17 +77,15 @@ public class MapPhaseActivity extends ActionBarActivity {
         }, DELAY, POLL_PERIOD);
     }
 
+
     private void checkStatus() throws JSONException{
 
         SimrnNetworker.initialize(this);
-        SimrnNetworker.getRequest(new Response.Listener<JSONObject>() {
+        SimrnNetworker.getNumberOfWorkers(new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject jsonObject) {
                 try {
-                    if (jsonObject.getBoolean("status")) {
-                        stopPolling();
-                        getSpecificData();
-                    }
+                    displayNumberOfWorkers(jsonObject);
                 }
                 catch (JSONException e){
                     Log.e("JSON", e.getMessage() + "");
@@ -92,38 +96,40 @@ public class MapPhaseActivity extends ActionBarActivity {
             public void onErrorResponse(VolleyError volleyError) {
 
             }
-        }, data.getString("imei"));
+        });
 
     }
+
+    private void displayNumberOfWorkers(JSONObject jsonObject) throws JSONException{
+        numberOfWorkers.setText(jsonObject.getString("number"));
+    }
+
+    private void deleteJob(){
+        SimrnNetworker.initialize(this);
+        SimrnNetworker.deleteJob(new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject jsonObject) {
+                finish();
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError volleyError) {
+                Log.e("Request failed!", volleyError.toString());
+            }
+        });
+    }
+
+
 
     private void stopPolling(){
         timer.cancel();
         timer.purge();
     }
 
-    private void getSpecificData(){
-
-    }
-
-    private void unregister() throws JSONException{
-        SimrnNetworker.initialize(this);
-        SimrnNetworker.unregisterWorker(new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject jsonObject) {
-
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError volleyError) {
-                Log.e("Volley", volleyError.getMessage() + "");
-            }
-        });
-    }
-
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_map_phase, menu);
+        getMenuInflater().inflate(R.menu.menu_controller_phase_actiivty, menu);
         return true;
     }
 
@@ -145,16 +151,8 @@ public class MapPhaseActivity extends ActionBarActivity {
     @Override
     public void finish(){
 
+        deleteJob();
         stopPolling();
-
-        try{
-            unregister();
-        }
-        catch (JSONException e){
-            //never going to happen
-            Log.e("JSON", e.getMessage() + "");
-        }
-
         super.finish();
     }
 }
