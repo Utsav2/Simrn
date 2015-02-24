@@ -1,10 +1,13 @@
 package cs241.simrn;
 
+import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -13,10 +16,27 @@ public class MainActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        NativeClass nativeClass = new NativeClass();
-        Log.e("tag", (nativeClass.helloSimrn()));
+        setUpButtons();
     }
 
+    private void setUpButtons(){
+        Button createButton = (Button)findViewById(R.id.createSearchButton);
+        Button joinButton = (Button)findViewById(R.id.joinSearchButton);
+
+        createButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getApplicationContext(), ControllerActivity.class));
+            }
+        });
+
+        joinButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(getApplicationContext(), WorkerActivity.class));
+            }
+        });
+    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

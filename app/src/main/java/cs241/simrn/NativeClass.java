@@ -5,7 +5,7 @@ public class NativeClass {
         System.loadLibrary("ndkModule");
     }
 
-    public native String helloNdkString();
+    //public native String helloNdkString();
 
     public native String helloSimrn();
 }

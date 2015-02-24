@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:clickable="true"
+    android:gravity="right"
+    tools:context=".StockListAdapter" >
+
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="5dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="17.5dp"
+        android:maxHeight="40dp"
+        android:maxLength="15"
+        android:text=""
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView
+        android:id="@+id/textView2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/textView1"
+        android:layout_marginBottom="7.5dp"
+        android:layout_marginLeft="20dp"
+        android:layout_marginTop="5dp"
+        android:maxLength="32"
+        android:text=""
+        android:textAppearance="?android:attr/textAppearanceSmall" />
+
+    <TextView
+        android:id="@+id/changeTextView"
+        android:layout_width="60dp"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="5dp"
+        android:layout_marginTop="17.5dp"
+        android:gravity="center_horizontal"
+        android:maxLength="5"
+        android:radius="10dip"
+        android:textAlignment="gravity"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textSize="20sp" />
+
+    <TextView
+        android:id="@+id/sideTextView"
+        android:layout_width="85dp"
+        android:layout_height="40dp"
+        android:layout_marginRight="6dp"
+        android:layout_marginTop="17.5dp"
+        android:layout_toLeftOf="@+id/changeTextView"
+        android:gravity="right"
+        android:maxLength="7"
+        android:singleLine="true"
+        android:textAlignment="gravity"
+        android:textAppearance="?android:attr/textAppearanceLarge" />
+
+    <TextView
+        android:id="@+id/timeTextView"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/sideTextView"
+        android:layout_below="@+id/textView1"
+        android:layout_marginTop="5dp"
+        android:text="" />
+
+</RelativeLayout>

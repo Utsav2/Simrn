@@ -2,6 +2,10 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="cs241.simrn" >
 
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
+
     <application
         android:allowBackup="true"
         android:icon="@drawable/ic_launcher"
@@ -15,6 +19,18 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity
+            android:name=".ControllerActivity"
+            android:label="@string/title_activity_controller" >
+        </activity>
+        <activity
+            android:name=".WorkerActivity"
+            android:label="@string/title_activity_worker" >
+        </activity>
+        <activity
+            android:name=".MapPhaseActivity"
+            android:label="@string/title_activity_map_phase" >
         </activity>
     </application>
 
