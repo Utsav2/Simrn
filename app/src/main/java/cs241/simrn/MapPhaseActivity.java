@@ -1,10 +1,13 @@
 package cs241.simrn;
 
+import android.graphics.Bitmap;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -20,11 +23,21 @@ public class MapPhaseActivity extends ActionBarActivity {
 
     private JSONObject data;
 
+    private String parent;
+
     Timer timer;
 
     private static final int DELAY = 1000;
 
     private static final int POLL_PERIOD = 10000;
+
+    private String subImageUrl;
+
+    static {
+        System.loadLibrary("ndkModule");
+    }
+
+    public native String graphSearch(Bitmap graph, Bitmap subgraph);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -33,6 +46,7 @@ public class MapPhaseActivity extends ActionBarActivity {
         timer = new Timer();
         try{
             data = new JSONObject(getIntent().getExtras().getString("data"));
+            parent = data.getString("imei");
             timer = new Timer();
             register();
         }
@@ -78,13 +92,16 @@ public class MapPhaseActivity extends ActionBarActivity {
             @Override
             public void onResponse(JSONObject jsonObject) {
                 try {
-                    if (jsonObject.getBoolean("status")) {
+                    if (jsonObject.getJSONArray("request").getJSONObject(0).getBoolean("status")) {
+                        subImageUrl = jsonObject.getJSONArray("request").getJSONObject(0).getString("sub_image");
                         stopPolling();
                         getSpecificData();
                     }
                 }
                 catch (JSONException e){
                     Log.e("JSON", e.getMessage() + "");
+                    Log.e("JSON", jsonObject.toString() + "");
+
                 }
             }
         }, new Response.ErrorListener() {
@@ -92,7 +109,7 @@ public class MapPhaseActivity extends ActionBarActivity {
             public void onErrorResponse(VolleyError volleyError) {
 
             }
-        }, data.getString("imei"));
+        }, parent);
 
     }
 
@@ -101,8 +118,55 @@ public class MapPhaseActivity extends ActionBarActivity {
         timer.purge();
     }
 
+    private void doJob(final Bitmap dividedImage){
+        SimrnNetworker.initialize(this);
+        SimrnNetworker.getImage(new Response.Listener<Bitmap>() {
+            @Override
+            public void onResponse(Bitmap subImage) {
+                showImage(dividedImage);
+                final TextView status = (TextView) findViewById(R.id.textView);
+                status.setText("Beginning job");
+                String result = graphSearch(dividedImage, subImage);
+
+                SimrnNetworker.registerWorkerResult(new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject jsonObject) {
+                        status.setText("Completed job");
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError volleyError) {
+                        Log.e("registering worker result error", volleyError.toString());
+                        status.setText("Error in sending job data");
+                    }
+                }, result, parent);
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError volleyError) {
+
+            }
+        }, subImageUrl);
+    }
+
     private void getSpecificData(){
 
+        SimrnNetworker.getWorkerData(new Response.Listener<Bitmap>() {
+            @Override
+            public void onResponse(Bitmap bitmap) {
+                    doJob(bitmap);
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError volleyError) {
+                Log.e("image_error", volleyError.toString());
+            }
+        });
+    }
+
+    private void showImage(Bitmap bitmap){
+        ImageView imageView = (ImageView)findViewById(R.id.imageView);
+        imageView.setImageBitmap(bitmap);
     }
 
     private void unregister() throws JSONException{
@@ -154,7 +218,6 @@ public class MapPhaseActivity extends ActionBarActivity {
             //never going to happen
             Log.e("JSON", e.getMessage() + "");
         }
-
         super.finish();
     }
 }

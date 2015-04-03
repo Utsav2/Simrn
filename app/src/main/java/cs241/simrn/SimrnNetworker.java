@@ -1,12 +1,16 @@
 package cs241.simrn;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.net.wifi.WifiInfo;
+import android.net.wifi.WifiManager;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.Response;
+import com.android.volley.toolbox.ImageRequest;
 import com.android.volley.toolbox.Volley;
 
 import org.json.JSONObject;
@@ -53,6 +57,19 @@ public class SimrnNetworker {
 
     }
 
+    public static void startJob(Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
+        checkForInitialize();
+        HashMap<String, String> params = new HashMap<>();
+        putImei(params);
+        createRequest(listener, errorListener, "startJob", params, Request.Method.POST);
+    }
+
+    public static void getImage(Response.Listener<Bitmap> listener, Response.ErrorListener errorListener, String url){
+        ImageRequest imageRequest = new ImageRequest(url, listener, 0, 0, null, errorListener);
+        imageRequest.setShouldCache(false);
+        mRequestQueue.add(imageRequest);
+    }
+
     public static void deleteJob(Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
         checkForInitialize();
         HashMap<String, String> params = new HashMap<>();
@@ -84,17 +101,26 @@ public class SimrnNetworker {
 
     public static void unregisterWorker(Response.Listener<JSONObject> listener,
                                         Response.ErrorListener errorListener){
-
+        checkForInitialize();
         toggleWorkerStatus(listener, errorListener, getImei(), "unregisterWorker");
 
     }
 
     public static void getRequest(Response.Listener<JSONObject> listener,
                                         Response.ErrorListener errorListener, String parent){
-
+        checkForInitialize();
         HashMap<String, String> params = new HashMap<>();
-        params.put("parent", parent);
+        params.put("imei", parent);
         createRequest(listener, errorListener, "getRequest", params, Request.Method.GET);
+    }
+
+    public static void getWorkerData(Response.Listener<Bitmap> listener, Response.ErrorListener errorListener){
+        checkForInitialize();
+        HashMap<String, String> params = new HashMap<>();
+        putImei(params);
+        ImageRequest imageRequest = new ImageRequest(SimrnRequest.BASE_URL + "getWorkerData?imei=" + getImei(), listener, 0, 0, null, errorListener);
+        imageRequest.setShouldCache(false);
+        mRequestQueue.add(imageRequest);
     }
 
     private static void putImei(HashMap<String, String> params){
@@ -108,9 +134,35 @@ public class SimrnNetworker {
         createRequest(listener, errorListener, "getNumberOfWorkers",params, Request.Method.POST);
     }
 
-    private static String getImei(){
+    public static void registerWorkerResult(Response.Listener<JSONObject> listener, Response.ErrorListener errorListener, String result, String parent){
+
+        checkForInitialize();
+        HashMap<String, String> params = new HashMap<>();
+        putImei(params);
+        params.put("result", result);
+        params.put("parent", parent);
+        createRequest(listener, errorListener, "registerWorkerResult",params, Request.Method.POST);
+
+    }
+
+    public static void getResults(Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
+
+        checkForInitialize();
+        createRequest(listener, errorListener, "getResults?imei=" + getImei(), null, Request.Method.GET);
+
+    }
+
+    public static String getImei(){
         TelephonyManager telephonyManager = (TelephonyManager)mContext.getSystemService(Context.TELEPHONY_SERVICE);
-        return telephonyManager.getDeviceId();
+        String imei =  telephonyManager.getDeviceId();
+        if(imei != null){
+            return imei;
+        }
+        WifiManager wifiManager = (WifiManager) mContext.getSystemService(Context.WIFI_SERVICE);
+        WifiInfo wInfo = wifiManager.getConnectionInfo();
+        String mac = wInfo.getMacAddress();
+        return mac;
+
     }
 
     private static void addToQueue(SimrnRequest request){

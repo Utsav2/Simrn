@@ -26,7 +26,7 @@ public class WorkerActivity extends ActionBarActivity implements SwipeRefreshLay
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.worker_list_layout);
+        setContentView(R.layout.list_layout);
         setUpView();
     }
 

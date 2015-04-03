@@ -10,5 +10,6 @@
     <string name="title_activity_worker">WorkerActivity</string>
     <string name="title_activity_map_phase">MapPhaseActivity</string>
     <string name="title_activity_controller_phase_actiivty">ControllerPhaseActiivty</string>
+    <string name="title_activity_result">ResultActivity</string>
 
 </resources>

@@ -1,5 +1,6 @@
 package cs241.simrn;
 
+import android.net.Uri;
 import android.util.Log;
 
 import com.android.volley.AuthFailureError;
@@ -11,6 +12,8 @@ import com.android.volley.VolleyError;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.net.URI;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -24,14 +27,26 @@ public class SimrnRequest extends Request<JSONObject> {
 
     private HashMap<String, String> mParams;
 
-    private static final String BASE_URL = "http://cs241.herokuapp.com/";
+    static final String BASE_URL = "http://cs241.herokuapp.com/";
 
     public SimrnRequest(Response.Listener<JSONObject>  listener,
                         Response.ErrorListener errorListener, int method, String url,
                         HashMap<String, String> params){
-        super(method, BASE_URL + url, errorListener);
+        super(method, BASE_URL + addParams(url, method, params), errorListener);
         mListener = listener;
         mParams = params;
+    }
+
+    private static String addParams(String url, int method, HashMap<String, String> params){
+        if(method != Method.GET || params == null)
+            return url;
+
+        Uri.Builder builder = Uri.parse(url).buildUpon();
+        for(Map.Entry<String, String> entry : params.entrySet()){
+            builder.appendQueryParameter(entry.getKey(), entry.getValue());
+        }
+
+        return builder.build().toString();
     }
 
     @Override

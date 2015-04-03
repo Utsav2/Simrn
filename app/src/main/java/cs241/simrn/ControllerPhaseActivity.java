@@ -1,5 +1,6 @@
 package cs241.simrn;
 
+import android.content.Intent;
 import android.support.v7.app.ActionBarActivity;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,6 +14,7 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -20,25 +22,29 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 
-public class ControllerPhaseActiivty extends ActionBarActivity {
+public class ControllerPhaseActivity extends ActionBarActivity {
 
     private JSONObject data;
 
-    Timer timer;
+    Timer numberOfWorkersTimer;
+
+    Timer statusCheckTimer;
 
     private static final int DELAY = 1000;
 
     private static final int POLL_PERIOD = 10000;
 
-    TextView numberOfWorkers;
+    TextView numberOfWorkersTextView;
+
+    private int numberOfWorkers;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        timer = new Timer();
+        numberOfWorkersTimer = new Timer();
+        statusCheckTimer  = new Timer();
         try{
             data = new JSONObject(getIntent().getExtras().getString("data"));
-            timer = new Timer();
         }
         catch (JSONException e) {
             Log.e("JSON", e.getMessage() + "");
@@ -46,10 +52,19 @@ public class ControllerPhaseActiivty extends ActionBarActivity {
         }
         setContentView(R.layout.activity_controller_phase_actiivty);
         setUpView();
-        poll();
+        pollHowManyWorkersRegistered();
     }
 
     private void setUpView(){
+
+        Button startJobButton = (Button)findViewById(R.id.startMap);
+        startJobButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startJob();
+            }
+        });
+
         Button deletePreviousJobButton = (Button)findViewById(R.id.deleteJob);
         deletePreviousJobButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -59,26 +74,88 @@ public class ControllerPhaseActiivty extends ActionBarActivity {
             }
         });
 
-        numberOfWorkers = (TextView)findViewById(R.id.numberOfWorkers);
+        numberOfWorkersTextView = (TextView)findViewById(R.id.numberOfWorkers);
     }
 
 
-    private void poll(){
-        timer.scheduleAtFixedRate(new TimerTask() {
+    private void pollHowManyWorkersRegistered(){
+        numberOfWorkersTimer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
                 try {
-                    checkStatus();
-                }
-                catch (JSONException e){
+                    checkNumberOfWorkerStatus();
+                } catch (JSONException e) {
                     Log.e("JSON", e.getMessage() + "");
                 }
             }
         }, DELAY, POLL_PERIOD);
     }
 
+    private void pollForResults(){
+        statusCheckTimer.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    checkWorkerResults();
+                } catch (JSONException e) {
+                    Log.e("JSON", e.getMessage() + "");
+                }
+            }
+        }, DELAY, POLL_PERIOD);
+    }
 
-    private void checkStatus() throws JSONException{
+    private void startJob(){
+
+        SimrnNetworker.initialize(this);
+        SimrnNetworker.startJob(new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject jsonObject) {
+                stopWorkerNumberPoll();
+                numberOfWorkersTextView.setText("The work has begun");
+                pollForResults();
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError volleyError) {
+
+            }
+        });
+    }
+
+    private void checkIfCompleted(JSONArray results){
+
+        //if all the workers have registered their data
+        if(results.length() == numberOfWorkers){
+            stopStatusCheckerPoll();
+            Intent intent =  new Intent(getApplicationContext(), ResultActivity.class);
+            intent.putExtra("data", results.toString());
+            startActivity(intent);
+            finish();
+        }
+
+    }
+
+    private void checkWorkerResults() throws JSONException {
+
+        SimrnNetworker.initialize(this);
+        SimrnNetworker.getResults(new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject jsonObject) {
+                try {
+                    checkIfCompleted(jsonObject.getJSONArray("results"));
+                } catch (JSONException e) {
+                    Log.e("JSON", e.getMessage() + "");
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError volleyError) {
+
+            }
+        });
+    }
+
+    private void checkNumberOfWorkerStatus() throws JSONException{
 
         SimrnNetworker.initialize(this);
         SimrnNetworker.getNumberOfWorkers(new Response.Listener<JSONObject>() {
@@ -101,7 +178,8 @@ public class ControllerPhaseActiivty extends ActionBarActivity {
     }
 
     private void displayNumberOfWorkers(JSONObject jsonObject) throws JSONException{
-        numberOfWorkers.setText(jsonObject.getString("number"));
+        numberOfWorkersTextView.setText(jsonObject.getString("number"));
+        numberOfWorkers = jsonObject.getInt("number");
     }
 
     private void deleteJob(){
@@ -119,11 +197,14 @@ public class ControllerPhaseActiivty extends ActionBarActivity {
         });
     }
 
+    private void stopWorkerNumberPoll(){
+        numberOfWorkersTimer.cancel();
+        numberOfWorkersTimer.purge();
+    }
 
-
-    private void stopPolling(){
-        timer.cancel();
-        timer.purge();
+    private void stopStatusCheckerPoll(){
+        statusCheckTimer.cancel();
+        statusCheckTimer.purge();
     }
 
     @Override
@@ -150,9 +231,8 @@ public class ControllerPhaseActiivty extends ActionBarActivity {
 
     @Override
     public void finish(){
-
-        deleteJob();
-        stopPolling();
+        stopWorkerNumberPoll();
+        stopStatusCheckerPoll();
         super.finish();
     }
 }

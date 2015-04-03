@@ -15,9 +15,9 @@ import android.widget.Toast;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
-
-import java.util.regex.Pattern;
 
 
 public class ControllerActivity extends ActionBarActivity {
@@ -26,7 +26,29 @@ public class ControllerActivity extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_controller);
-        setUpView();
+        SimrnNetworker.initialize(this);
+        SimrnNetworker.getRequest(new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject jsonObject) {
+                try{
+                    JSONArray requests = jsonObject.getJSONArray("request");
+                    if(requests.length() > 0){
+                        goToPhaseActivity(requests.getJSONObject(0));
+                    }
+                    else{
+                        setUpView();
+                    }
+                }
+                catch (JSONException e){
+                    Log.e("JSON", e.getMessage() + "");
+                }
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError volleyError) {
+
+            }
+        }, SimrnNetworker.getImei());
     }
 
     private void setUpView(){
@@ -57,9 +79,7 @@ public class ControllerActivity extends ActionBarActivity {
         SimrnNetworker.createJob(imageUrl, subImageUrl, new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject jsonObject) {
-                Intent intent = new Intent(getApplicationContext(), ControllerPhaseActiivty.class);
-                intent.putExtra("data", jsonObject.toString());
-                startActivity(intent);
+                goToPhaseActivity(jsonObject);
             }
         }, new Response.ErrorListener() {
             @Override
@@ -67,6 +87,12 @@ public class ControllerActivity extends ActionBarActivity {
                 Log.e("Request failed!", volleyError.toString());
             }
         });
+    }
+
+    private void goToPhaseActivity(JSONObject data){
+        Intent intent = new Intent(getApplicationContext(), ControllerPhaseActivity.class);
+        intent.putExtra("data", data.toString());
+        startActivity(intent);
     }
 
     @Override
